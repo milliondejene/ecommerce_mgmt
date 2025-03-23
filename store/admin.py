@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db.models import Sum, F
 from django.utils.html import format_html
+from django.contrib import messages
 from .models import Product, PurchaseOrder, PurchaseOrderLineItem, Invoice, InvoiceLineItem
 
 # Register your models here.
@@ -36,7 +37,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ('customer', 'invoice_date', 'status', 'total', 'colored_status')
     list_filter = ('status', 'invoice_date')
     inlines = [InvoiceLineItemInline]
-    actions = ['mark_as_paid']
+    actions = ['mark_as_paid', 'export_to_excel']
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -61,6 +62,13 @@ class InvoiceAdmin(admin.ModelAdmin):
         )
     colored_status.short_description = 'Status'
 
+    def export_to_excel(self, request, queryset):
+        for invoice in queryset:
+            filename = invoice.export_to_excel()
+            messages.success(request, f'Successfully exported invoice {invoice.id} to {filename}')
+    export_to_excel.short_description = "Export selected invoices to Excel"
+
     def mark_as_paid(self, request, queryset):
         updated = queryset.update(status='PAID')
         self.message_user(request, f'{updated} invoice(s) marked as paid.')
+    mark_as_paid.short_description = "Mark selected invoices as paid"
