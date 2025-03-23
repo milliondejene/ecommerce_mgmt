@@ -30,8 +30,8 @@ cd ecommerce_mgmt
 
 2. Create and activate a virtual environment:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
 ```
 
 3. Install dependencies:
@@ -71,21 +71,4 @@ python manage.py runserver
 
 - Django 5.0.3
 - openpyxl 3.1.5 (for Excel export)
-- python-dotenv 1.0.1
 
-## Project Structure
-
-```
-ecommerce_mgmt/
-├── store/                  # Main application
-│   ├── models.py          # Data models
-│   ├── admin.py           # Admin interface
-│   ├── views.py           # Views
-│   └── templates/         # HTML templates
-├── exports/               # Excel exports directory
-└── requirements.txt       # Project dependencies
-```
-
-## License
-
-MIT License
