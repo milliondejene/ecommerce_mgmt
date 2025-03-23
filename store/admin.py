@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.db.models import Sum, F
 from django.utils.html import format_html
 from django.contrib import messages
+from django.utils.safestring import mark_safe
 from .models import Product, PurchaseOrder, PurchaseOrderLineItem, Invoice, InvoiceLineItem
 
 # Register your models here.
@@ -34,10 +35,11 @@ class InvoiceLineItemInline(admin.TabularInline):
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('customer', 'invoice_date', 'status', 'total', 'colored_status')
+    list_display = ('customer', 'invoice_date', 'due_date', 'status', 'total', 'days_overdue_display', 'colored_status', 'print_button')
     list_filter = ('status', 'invoice_date')
     inlines = [InvoiceLineItemInline]
     actions = ['mark_as_paid', 'export_to_excel']
+    readonly_fields = ('days_overdue_display', 'print_button')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -48,6 +50,16 @@ class InvoiceAdmin(admin.ModelAdmin):
     def total(self, obj):
         return obj.get_total()
     total.short_description = 'Total Amount'
+
+    def days_overdue_display(self, obj):
+        days = obj.get_days_overdue()
+        if days > 0:
+            return format_html(
+                '<span style="color: red; font-weight: bold;">{} days</span>',
+                days
+            )
+        return "Not overdue"
+    days_overdue_display.short_description = 'Days Overdue'
 
     def colored_status(self, obj):
         colors = {
@@ -61,6 +73,12 @@ class InvoiceAdmin(admin.ModelAdmin):
             obj.get_status_display()
         )
     colored_status.short_description = 'Status'
+
+    def print_button(self, obj):
+        if obj.id:
+            return mark_safe(f'<a class="button" href="{obj.get_absolute_url()}" target="_blank">Print Invoice</a>')
+        return ""
+    print_button.short_description = 'Print'
 
     def export_to_excel(self, request, queryset):
         for invoice in queryset:

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice #{{ invoice.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        .header {
+            border-bottom: 2px solid #4F81BD;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .invoice-details {
+            float: right;
+            text-align: right;
+        }
+        .customer-details {
+            float: left;
+        }
+        .clear {
+            clear: both;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #4F81BD;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .overdue {
+            color: red;
+            font-weight: bold;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: white;
+            font-weight: bold;
+        }
+        .status-PAID { background-color: #28a745; }
+        .status-UNPAID { background-color: #ffc107; }
+        .status-OVERDUE { background-color: #dc3545; }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="customer-details">
+            <h2>{{ invoice.customer }}</h2>
+        </div>
+        <div class="invoice-details">
+            <h1>Invoice #{{ invoice.id }}</h1>
+            <p>Date: {{ invoice.invoice_date }}</p>
+            <span class="status status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+            {% if invoice.status == 'OVERDUE' %}
+            <p class="overdue">Overdue by {{ days_overdue }} days</p>
+            {% endif %}
+        </div>
+        <div class="clear"></div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Quantity</th>
+                <th>Price Each</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.invoicelineitem_set.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.product.sku }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.price_each }}</td>
+                <td>${{ item.quantity|multiply:item.price_each }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="4" style="text-align: right;">Total:</td>
+                <td>${{ invoice.get_total }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button class="no-print" onclick="window.print()">Print Invoice</button>
+</body>
+</html>

@@ -4,7 +4,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 import os
-from datetime import datetime
+from datetime import datetime, date
+from django.urls import reverse
 
 # Create your models here.
 
@@ -48,6 +49,7 @@ class Invoice(models.Model):
     invoice_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     products = models.ManyToManyField(Product, through='InvoiceLineItem')
+    due_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"INV-{self.id} - {self.customer}"
@@ -58,7 +60,18 @@ class Invoice(models.Model):
         ).aggregate(
             total=Sum('line_total')
         )['total'] or 0
-        
+
+    def get_days_overdue(self):
+        if not self.due_date or self.status == 'PAID':
+            return 0
+        today = date.today()
+        if today > self.due_date:
+            return (today - self.due_date).days
+        return 0
+
+    def get_absolute_url(self):
+        return reverse('store:invoice_print', args=[str(self.id)])
+
     def export_to_excel(self):
         wb = Workbook()
         ws = wb.active
